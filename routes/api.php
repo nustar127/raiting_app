@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\FacultyController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -19,5 +20,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/change-password', [AuthController::class, 'changePassword'])
                 ->middleware('password.changed');
         });
+    });
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::apiResource('faculties', FacultyController::class);
     });
 });
