@@ -17,6 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'password.changed' => \App\Http\Middleware\EnsurePasswordChanged::class,
         ]);
     })
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'password.changed' => \App\Http\Middleware\EnsurePasswordChanged::class,
+            'role' => \App\Http\Middleware\EnsureRole::class,
+            'faculty.scope' => \App\Http\Middleware\EnsureFacultyScope::class,
+            'teacher.scope' => \App\Http\Middleware\EnsureTeacherScope::class,
+        ]);
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*') || $request->expectsJson(),
