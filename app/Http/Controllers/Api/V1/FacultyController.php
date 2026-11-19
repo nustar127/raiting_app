@@ -76,14 +76,19 @@ class FacultyController extends Controller
     {
         Gate::authorize('delete', $faculty);
 
-        // Если есть зависимые кафедры — FK не даст удалить, вернём 409.
-        try {
-            $faculty->delete();
-        } catch (\Illuminate\Database\QueryException $e) {
+        if ($faculty->departments()->exists()) {
             return response()->json([
-                'message' => 'Невозможно удалить факультет: есть связанные записи.',
+                'message' => 'Невозможно удалить факультет: есть связанные кафедры.',
             ], 409);
         }
+
+        if ($faculty->deanEmployees()->exists()) {
+            return response()->json([
+                'message' => 'Невозможно удалить факультет: за ним закреплены сотрудники деканата.',
+            ], 409);
+        }
+
+        $faculty->delete();
 
         return response()->json(null, 204);
     }
