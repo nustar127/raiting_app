@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('name', 255);
             $table->string('short_name', 50);
             $table->timestamps();
+            $table->unique(['faculty_id', 'short_name']);
         });
     }
 
