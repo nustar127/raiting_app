@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -52,5 +53,35 @@ class User extends Authenticatable
     public function hasRole(string $code): bool
     {
         return $this->role?->code === $code;
+    }
+
+    public function teacher(): HasOne
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    public function deanEmployee(): HasOne
+    {
+        return $this->hasOne(DeanEmployee::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role?->code === 'admin';
+    }
+
+    public function isDean(): bool
+    {
+        return $this->role?->code === 'dean';
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->role?->code === 'teacher';
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role?->code === 'student';
     }
 }
