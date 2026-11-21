@@ -55,7 +55,7 @@ class GroupController extends Controller
 
         $group = Group::create($request->validated());
 
-        return (new GroupResource($group->load('faculty')))
+        return (new GroupResource($group->load('faculty')->loadCount('students')))
             ->response()
             ->setStatusCode(201);
     }
@@ -82,7 +82,7 @@ class GroupController extends Controller
     {
         Gate::authorize('delete', $group);
 
-        if (class_exists(\App\Models\Student::class) && $group->students()->exists()) {
+        if ($group->students()->exists()) {
             return response()->json([
                 'message' => 'Невозможно удалить группу: в ней есть студенты.',
             ], 409);
