@@ -23,4 +23,9 @@ class Module extends Model
     {
         return $this->hasMany(WeightCoefficient::class);
     }
+
+    public function grades(): HasMany
+    {
+        return $this->hasMany(Grade::class);
+    }
 }
