@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\RatingPeriodController;
 use App\Http\Controllers\Api\V1\WeightCoefficientController;
 use App\Http\Controllers\Api\V1\GradeController;
 use App\Http\Controllers\Api\V1\TeacherAssignmentController;
+use App\Http\Controllers\Api\V1\GradeCommentController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -71,10 +72,20 @@ Route::prefix('v1')->group(function () {
         Route::post('grades/bulk', [GradeController::class, 'bulk'])
             ->name('grades.bulk');
 
-        Route::apiResource('grades', GradeController::class)
+        Route::apiResource('grades', GradeController::class);
         Route::apiResource('teacher-assignments', TeacherAssignmentController::class)
             ->parameters(['teacher-assignments' => 'teacherAssignment'])
             ->except(['update'])
             ->middleware(['faculty.scope', 'teacher.scope']);
+
+        Route::get('grades/{grade}/comments', [GradeCommentController::class, 'indexForGrade'])
+            ->name('grades.comments.index');
+        Route::post('grades/{grade}/comments', [GradeCommentController::class, 'store'])
+            ->name('grades.comments.store');
+
+        Route::apiResource('comments', GradeCommentController::class)
+            ->parameters(['comments' => 'comment'])
+            ->only(['show', 'update', 'destroy'])
+            ->middleware('teacher.scope');
     });
 });
