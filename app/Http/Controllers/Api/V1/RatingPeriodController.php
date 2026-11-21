@@ -12,10 +12,41 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use App\Services\Rating\WeightService;
 
 class RatingPeriodController extends Controller
 {
-    public function __construct(private readonly PeriodService $periodService) {}
+    public function __construct(
+        private readonly PeriodService $periodService,
+        private readonly WeightService $weightService,
+    ) {}
+
+    public function approveWeights(Request $request, RatingPeriod $period): JsonResponse
+    {
+        // Только декан своего факультета или админ
+        $user = $request->user();
+        $allowed = $user->isAdmin()
+            || ($user->isDean() && $user->deanEmployee?->faculty_id === $period->faculty_id);
+
+        if (!$allowed) {
+            return response()->json(['message' => 'Недостаточно прав.'], 403);
+        }
+
+        if ($period->isClosed()) {
+            return response()->json(['message' => 'Период закрыт — утверждать веса нельзя.'], 409);
+        }
+
+        try {
+            $this->weightService->approveAll($period, $user->id);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Не удалось утвердить веса.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        return response()->json(['message' => 'Веса утверждены.']);
+    }
 
     public function index(Request $request): AnonymousResourceCollection
     {
