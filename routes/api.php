@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\FacultyController;
 use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\DisciplineController;
+use App\Http\Controllers\Api\V1\WorkTypeController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -30,5 +31,6 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('departments', DepartmentController::class);
         Route::apiResource('groups', GroupController::class);
         Route::apiResource('disciplines', DisciplineController::class);
+        Route::apiResource('work-types', WorkTypeController::class);
     });
 });
