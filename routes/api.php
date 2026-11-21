@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\DeanEmployeeController;
 use App\Http\Controllers\Api\V1\CurriculumController;
 use App\Http\Controllers\Api\V1\ModuleController;
 use App\Http\Controllers\Api\V1\RatingPeriodController;
+use App\Http\Controllers\Api\V1\WeightCoefficientController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -57,5 +58,12 @@ Route::prefix('v1')->group(function () {
             ->name('periods.open');
         Route::post('periods/{period}/close', [RatingPeriodController::class, 'close'])
             ->name('periods.close');
+
+        Route::apiResource('weights', WeightCoefficientController::class)
+            ->parameters(['weights' => 'weight'])
+            ->middleware('faculty.scope');
+
+        Route::post('periods/{period}/weights/approve', [RatingPeriodController::class, 'approveWeights'])
+            ->name('periods.weights.approve');
     });
 });
