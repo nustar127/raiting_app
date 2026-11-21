@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\GroupController;
 use App\Http\Controllers\Api\V1\DisciplineController;
 use App\Http\Controllers\Api\V1\WorkTypeController;
 use App\Http\Controllers\Api\V1\StudentController;
+use App\Http\Controllers\Api\V1\TeacherController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -34,6 +35,8 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('disciplines', DisciplineController::class);
         Route::apiResource('work-types', WorkTypeController::class);
         Route::apiResource('students', StudentController::class)
+            ->middleware('faculty.scope');
+        Route::apiResource('teachers', TeacherController::class)
             ->middleware('faculty.scope');
     });
 });
