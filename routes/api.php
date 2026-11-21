@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\TeacherController;
 use App\Http\Controllers\Api\V1\DeanEmployeeController;
 use App\Http\Controllers\Api\V1\CurriculumController;
 use App\Http\Controllers\Api\V1\ModuleController;
+use App\Http\Controllers\Api\V1\RatingPeriodController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -48,5 +49,13 @@ Route::prefix('v1')->group(function () {
             ->middleware('faculty.scope');
         Route::apiResource('modules', ModuleController::class)
             ->middleware('faculty.scope');
+        Route::apiResource('periods', RatingPeriodController::class)
+            ->parameters(['periods' => 'period'])
+            ->middleware('faculty.scope');
+
+        Route::post('periods/{period}/open', [RatingPeriodController::class, 'open'])
+            ->name('periods.open');
+        Route::post('periods/{period}/close', [RatingPeriodController::class, 'close'])
+            ->name('periods.close');
     });
 });
