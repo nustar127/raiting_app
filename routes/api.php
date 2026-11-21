@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\StudentController;
 use App\Http\Controllers\Api\V1\TeacherController;
 use App\Http\Controllers\Api\V1\DeanEmployeeController;
 use App\Http\Controllers\Api\V1\CurriculumController;
+use App\Http\Controllers\Api\V1\ModuleController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -44,6 +45,8 @@ Route::prefix('v1')->group(function () {
             ->middleware('faculty.scope')
             ->parameters(['dean-employees' => 'deanEmployee']);
         Route::apiResource('curricula', CurriculumController::class)
+            ->middleware('faculty.scope');
+        Route::apiResource('modules', ModuleController::class)
             ->middleware('faculty.scope');
     });
 });
