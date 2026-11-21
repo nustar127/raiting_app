@@ -81,12 +81,11 @@ class DisciplineController extends Controller
     {
         Gate::authorize('delete', $discipline);
 
-        // TODO(3.9): раскомментировать, когда появится Curriculum
-        // if ($discipline->curricula()->exists()) {
-        //     return response()->json([
-        //         'message' => 'Невозможно удалить дисциплину: она используется в учебных планах.',
-        //     ], 409);
-        // }
+        if ($discipline->curricula()->exists()) {
+            return response()->json([
+                'message' => 'Невозможно удалить дисциплину: она используется в учебных планах.',
+            ], 409);
+        }
 
         $discipline->delete();
 
