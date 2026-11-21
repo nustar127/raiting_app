@@ -92,12 +92,11 @@ class CurriculumController extends Controller
     {
         Gate::authorize('delete', $curriculum);
 
-        // TODO(3.10): раскомментировать, когда появится Module
-        // if ($curriculum->modules()->exists()) {
-        //     return response()->json([
-        //         'message' => 'Невозможно удалить запись учебного плана: по ней уже созданы модули.',
-        //     ], 409);
-        // }
+        if ($curriculum->modules()->exists()) {
+            return response()->json([
+                'message' => 'Невозможно удалить запись учебного плана: по ней уже созданы модули.',
+            ], 409);
+        }
 
         $curriculum->delete();
 
