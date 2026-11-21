@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\CurriculumController;
 use App\Http\Controllers\Api\V1\ModuleController;
 use App\Http\Controllers\Api\V1\RatingPeriodController;
 use App\Http\Controllers\Api\V1\WeightCoefficientController;
+use App\Http\Controllers\Api\V1\GradeController;
 use App\Http\Controllers\Api\V1\TeacherAssignmentController;
 
 Route::prefix('v1')->group(function () {
@@ -67,6 +68,10 @@ Route::prefix('v1')->group(function () {
         Route::post('periods/{period}/weights/approve', [RatingPeriodController::class, 'approveWeights'])
             ->name('periods.weights.approve');
 
+        Route::post('grades/bulk', [GradeController::class, 'bulk'])
+            ->name('grades.bulk');
+
+        Route::apiResource('grades', GradeController::class)
         Route::apiResource('teacher-assignments', TeacherAssignmentController::class)
             ->parameters(['teacher-assignments' => 'teacherAssignment'])
             ->except(['update'])
