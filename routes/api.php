@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\TeacherAssignmentController;
 use App\Http\Controllers\Api\V1\GradeCommentController;
 use App\Http\Controllers\Api\V1\RatingController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\ReportController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -103,6 +104,15 @@ Route::prefix('v1')->group(function () {
             Route::get('faculty/{faculty}', [DashboardController::class, 'faculty'])
                 ->middleware('faculty.scope');
             Route::get('group/{group}', [DashboardController::class, 'group'])
+                ->middleware('faculty.scope');
+        });
+
+        Route::prefix('reports')->group(function () {
+            Route::get('rating-list', [ReportController::class, 'ratingList'])
+                ->middleware('faculty.scope');
+            Route::get('student-card', [ReportController::class, 'studentCard'])
+                ->middleware('faculty.scope');
+            Route::get('period-summary', [ReportController::class, 'periodSummary'])
                 ->middleware('faculty.scope');
         });
     });
