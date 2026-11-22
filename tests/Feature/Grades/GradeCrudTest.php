@@ -16,6 +16,8 @@ use App\Models\User;
 use App\Models\WorkType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Queue;
+use App\Jobs\RecalculateRatingsJob;
 
 uses(RefreshDatabase::class);
 
@@ -319,4 +321,90 @@ it('декан видит только оценки студентов свое�
         ->getJson('/api/v1/grades')
         ->assertOk()
         ->assertJsonCount(1, 'data');
+});
+
+it('dispatch-ит RecalculateRatingsJob при создании оценки', function () {
+    Queue::fake();
+
+    [$faculty, $teacherUser, $teacher, $period, $curr, $m1, $m2, $studentUser, $student, $workType] = setupFullContext();
+
+    $this->actingAs($teacherUser, 'sanctum')
+        ->postJson('/api/v1/grades', [
+            'student_id' => $student->id,
+            'module_id' => $m1->id,
+            'work_type_id' => $workType->id,
+            'period_id' => $period->id,
+            'value' => 8,
+            'date_assigned' => '2025-10-01',
+        ])
+        ->assertCreated();
+
+    Queue::assertPushed(RecalculateRatingsJob::class, function ($job) use ($student, $period) {
+        return $job->scope === 'student'
+            && $job->targetId === $student->id
+            && $job->periodId === $period->id;
+    });
+});
+
+it('dispatch-ит RecalculateRatingsJob при удалении оценки', function () {
+    Queue::fake();
+
+    [$faculty, $teacherUser, $teacher, $period, $curr, $m1, $m2, $studentUser, $student, $workType] = setupFullContext();
+
+    $grade = Grade::create([
+        'student_id' => $student->id,
+        'module_id' => $m1->id,
+        'work_type_id' => $workType->id,
+        'teacher_id' => $teacher->id,
+        'period_id' => $period->id,
+        'value' => 6,
+        'date_assigned' => '2025-10-01',
+        'weeks_late' => 0,
+    ]);
+
+    $this->actingAs($teacherUser, 'sanctum')
+        ->deleteJson("/api/v1/grades/{$grade->id}")
+        ->assertNoContent();
+
+    Queue::assertPushed(RecalculateRatingsJob::class, function ($job) use ($student, $period) {
+        return $job->scope === 'student'
+            && $job->targetId === $student->id
+            && $job->periodId === $period->id;
+    });
+});
+
+it('bulk dispatch-ит джоб на группу, если затронуто > 5 студентов', function () {
+    Queue::fake();
+
+    [$faculty, $teacherUser, $teacher, $period, $curr, $m1, $m2, $studentUser, $student, $workType] = setupFullContext();
+    $group = $curr->group;
+
+    // Создаём ещё 5 студентов в группе
+    $rows = [['student_id' => $student->id, 'value' => 8]];
+    for ($i = 0; $i < 5; $i++) {
+        $u = makeUserWithRole('student');
+        $s = \App\Models\Student::create([
+            'user_id' => $u->id,
+            'group_id' => $group->id,
+            'record_book_number' => 'RBX' . rand(10000, 99999),
+            'status' => 'active',
+        ]);
+        $rows[] = ['student_id' => $s->id, 'value' => 7];
+    }
+
+    $this->actingAs($teacherUser, 'sanctum')
+        ->postJson('/api/v1/grades/bulk', [
+            'module_id' => $m1->id,
+            'work_type_id' => $workType->id,
+            'period_id' => $period->id,
+            'date_assigned' => '2025-10-01',
+            'grades' => $rows,
+        ])
+        ->assertOk();
+
+    Queue::assertPushed(RecalculateRatingsJob::class, function ($job) use ($group, $period) {
+        return $job->scope === 'group'
+            && $job->targetId === $group->id
+            && $job->periodId === $period->id;
+    });
 });
