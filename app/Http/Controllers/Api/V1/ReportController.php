@@ -19,9 +19,45 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Services\Export\ExporterFactory;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReportController extends Controller
 {
+
+    public function export(Request $request, string $type, ExporterFactory $factory): Response|JsonResponse
+    {
+        $format = $request->query('format', 'csv');
+        if (!in_array($format, ['csv', 'xlsx', 'pdf'], true)) {
+            return response()->json(['message' => 'Неподдерживаемый формат.'], 422);
+        }
+
+        $response = match ($type) {
+            'rating-list' => $this->ratingList($request),
+            'student-card' => $this->studentCard($request),
+            'period-summary' => $this->periodSummary($request),
+            default => null,
+        };
+
+        if ($response === null) {
+            return response()->json(['message' => 'Неизвестный тип отчёта.'], 422);
+        }
+
+        if ($response->getStatusCode() !== 200) {
+            return $response;
+        }
+
+        $data = $response->getData(true)['data'] ?? [];
+
+        $filename = sprintf(
+            '%s_%s_%s',
+            $type,
+            now()->format('Ymd_His'),
+            $data['period']['id'] ?? 'x'
+        );
+
+        return $factory->make($format)->export($data, str_replace('-', '_', $type), $filename);
+    }
     /**
      * GET /reports/rating-list
      * Фильтры: faculty_id, group_id, period_id, course, sort_by, sort_dir, per_page

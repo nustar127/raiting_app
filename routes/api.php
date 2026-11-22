@@ -114,6 +114,9 @@ Route::prefix('v1')->group(function () {
                 ->middleware('faculty.scope');
             Route::get('period-summary', [ReportController::class, 'periodSummary'])
                 ->middleware('faculty.scope');
+            Route::get('{type}/export', [ReportController::class, 'export'])
+                ->middleware('faculty.scope')
+                ->whereIn('type', ['rating-list', 'student-card', 'period-summary']);
         });
     });
 });
