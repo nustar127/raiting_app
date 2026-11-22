@@ -28,4 +28,9 @@ class Module extends Model
     {
         return $this->hasMany(Grade::class);
     }
+
+    public function moduleRatings(): HasMany
+    {
+        return $this->hasMany(ModuleRating::class);
+    }
 }

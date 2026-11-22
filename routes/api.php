@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\WeightCoefficientController;
 use App\Http\Controllers\Api\V1\GradeController;
 use App\Http\Controllers\Api\V1\TeacherAssignmentController;
 use App\Http\Controllers\Api\V1\GradeCommentController;
+use App\Http\Controllers\Api\V1\RatingController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -87,5 +88,12 @@ Route::prefix('v1')->group(function () {
             ->parameters(['comments' => 'comment'])
             ->only(['show', 'update', 'destroy'])
             ->middleware('teacher.scope');
+
+        Route::prefix('ratings')->group(function () {
+            Route::get('students/{student}', [RatingController::class, 'student']);
+            Route::get('groups/{group}', [RatingController::class, 'group']);
+            Route::get('faculties/{facultyId}', [RatingController::class, 'faculty']);
+            Route::get('top', [RatingController::class, 'top']);
+        });
     });
 });

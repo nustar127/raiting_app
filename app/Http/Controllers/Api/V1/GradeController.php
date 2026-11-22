@@ -19,6 +19,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use App\Jobs\RecalculateRatingsJob;
 
 class GradeController extends Controller
 {
@@ -76,7 +77,7 @@ class GradeController extends Controller
             'weeks_late' => $request->validated('weeks_late', 0),
         ]);
 
-        // TODO(6): dispatch RecalculateModuleRatingJob
+        RecalculateRatingsJob::dispatch('student', $grade->student_id, $grade->period_id);
 
         return (new GradeResource($grade->load(['student.user', 'module', 'workType', 'teacher.user'])))
             ->response()
@@ -98,7 +99,7 @@ class GradeController extends Controller
 
         $grade->update($request->validated());
 
-        // TODO(6): dispatch RecalculateModuleRatingJob
+        RecalculateRatingsJob::dispatch('student', $grade->student_id, $grade->period_id);
 
         return new GradeResource($grade->fresh()->load(['student.user', 'module', 'workType', 'teacher.user']));
     }
@@ -107,9 +108,12 @@ class GradeController extends Controller
     {
         Gate::authorize('delete', $grade);
 
+        $studentId = $grade->student_id;
+        $periodId = $grade->period_id;
+
         $grade->delete();
 
-        // TODO(6): dispatch RecalculateModuleRatingJob
+        RecalculateRatingsJob::dispatch('student', $studentId, $periodId);
 
         return response()->json(null, 204);
     }
@@ -130,15 +134,13 @@ class GradeController extends Controller
 
         $saved = 0;
         $errors = [];
+        $affectedStudentIds = [];
 
-        DB::transaction(function () use ($request, $teacher, $module, $workType, $period, &$saved, &$errors) {
+        DB::transaction(function () use ($request, $teacher, $module, $workType, $period, &$saved, &$errors, &$affectedStudentIds) {
             foreach ($request->validated('grades') as $row) {
                 $student = Student::find($row['student_id']);
                 if (!$student) {
-                    $errors[] = [
-                        'student_id' => $row['student_id'],
-                        'message' => 'Студент не найден',
-                    ];
+                    $errors[] = ['student_id' => $row['student_id'], 'message' => 'Студент не найден'];
                     continue;
                 }
 
@@ -167,10 +169,21 @@ class GradeController extends Controller
                     ]
                 );
                 $saved++;
+                $affectedStudentIds[] = $row['student_id'];
             }
         });
 
-        // TODO(6): dispatch RecalculateModuleRatingJob
+        // Один джоб на группу, если много студентов, иначе — по студенту
+        if (!empty($affectedStudentIds)) {
+            if (count($affectedStudentIds) > 5) {
+                // Оптимизация: пересчитываем всю группу разом
+                RecalculateRatingsJob::dispatch('group', $module->curriculum->group_id, $period->id);
+            } else {
+                foreach (array_unique($affectedStudentIds) as $sid) {
+                    RecalculateRatingsJob::dispatch('student', $sid, $period->id);
+                }
+            }
+        }
 
         return response()->json([
             'saved' => $saved,
