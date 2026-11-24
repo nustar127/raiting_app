@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\GradeController;
 use App\Http\Controllers\Api\V1\TeacherAssignmentController;
 use App\Http\Controllers\Api\V1\GradeCommentController;
 use App\Http\Controllers\Api\V1\RatingController;
+use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\ReportController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -94,6 +96,27 @@ Route::prefix('v1')->group(function () {
             Route::get('groups/{group}', [RatingController::class, 'group']);
             Route::get('faculties/{facultyId}', [RatingController::class, 'faculty']);
             Route::get('top', [RatingController::class, 'top']);
+        });
+
+        Route::prefix('dashboard')->group(function () {
+            Route::get('summary', [DashboardController::class, 'summary'])
+                ->middleware('faculty.scope');
+            Route::get('faculty/{faculty}', [DashboardController::class, 'faculty'])
+                ->middleware('faculty.scope');
+            Route::get('group/{group}', [DashboardController::class, 'group'])
+                ->middleware('faculty.scope');
+        });
+
+        Route::prefix('reports')->group(function () {
+            Route::get('rating-list', [ReportController::class, 'ratingList'])
+                ->middleware('faculty.scope');
+            Route::get('student-card', [ReportController::class, 'studentCard'])
+                ->middleware('faculty.scope');
+            Route::get('period-summary', [ReportController::class, 'periodSummary'])
+                ->middleware('faculty.scope');
+            Route::get('{type}/export', [ReportController::class, 'export'])
+                ->middleware('faculty.scope')
+                ->whereIn('type', ['rating-list', 'student-card', 'period-summary']);
         });
     });
 });
