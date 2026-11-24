@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\GradeCommentController;
 use App\Http\Controllers\Api\V1\RatingController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ImportController;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn() => response()->json([
@@ -117,6 +118,13 @@ Route::prefix('v1')->group(function () {
             Route::get('{type}/export', [ReportController::class, 'export'])
                 ->middleware('faculty.scope')
                 ->whereIn('type', ['rating-list', 'student-card', 'period-summary']);
+        });
+
+        Route::prefix('import')->group(function () {
+            Route::post('users', [ImportController::class, 'users']);
+            Route::get('users/template', [ImportController::class, 'usersTemplate']);
+            Route::get('grades/template', [ImportController::class, 'gradesTemplate']);
+            Route::post('grades', [ImportController::class, 'grades']);
         });
     });
 });
