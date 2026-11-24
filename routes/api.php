@@ -124,6 +124,7 @@ Route::prefix('v1')->group(function () {
             Route::post('users', [ImportController::class, 'users']);
             Route::get('users/template', [ImportController::class, 'usersTemplate']);
             Route::get('grades/template', [ImportController::class, 'gradesTemplate']);
+            Route::post('grades', [ImportController::class, 'grades']);
         });
     });
 });
