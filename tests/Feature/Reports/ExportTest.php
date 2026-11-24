@@ -139,8 +139,11 @@ it('rating-list в PDF отдаёт файл с кириллицей', function 
     $response->assertHeader('Content-Type', 'application/pdf');
     expect($response->headers->get('Content-Disposition'))->toContain('.pdf');
 
-    // PDF начинается с %PDF
-    $content = $response->getContent();
+    // StreamedResponse: получаем содержимое через ob_start + sendContent
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
     expect(substr($content, 0, 4))->toBe('%PDF');
 });
 
@@ -152,7 +155,13 @@ it('student-card в PDF отдаёт файл', function () {
         ->get("/api/v1/reports/student-card/export?student_id={$student->id}&period_id={$ctx['period']->id}&format=pdf");
 
     $response->assertOk();
-    expect(substr($response->getContent(), 0, 4))->toBe('%PDF');
+    $response->assertHeader('Content-Type', 'application/pdf');
+
+    ob_start();
+    $response->sendContent();
+    $content = ob_get_clean();
+
+    expect(substr($content, 0, 4))->toBe('%PDF');
 });
 
 it('period-summary в CSV отдаёт файл', function () {
